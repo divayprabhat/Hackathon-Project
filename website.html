@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Attendance System</title>
+<style>
+/* Your original CSS here, unchanged */
+* {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+:root {--primary:#2196F3; --secondary:#1976D2; --success:#4CAF50; --warning:#FF9800; --danger:#F44336; --light:#f8f9fa; --dark:#212529; --gray:#6c757d;}
+body {background:#f5f7fb; color:var(--dark); line-height:1.6;}
+.container {width:100%; max-width:1200px; margin:0 auto; padding:0 20px;}
+.card {background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); padding:20px; margin-bottom:20px;}
+.btn {display:inline-block; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:500; transition:all 0.3s; text-decoration:none;}
+.btn:hover {background:var(--secondary); transform:translateY(-1px);}
+.btn-success {background:var(--success);}
+.btn-warning {background:var(--warning);}
+.btn-danger {background:var(--danger);}
+.login-container {display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#2196F3 0%,#1976D2 100%);}
+.login-box {width:100%; max-width:400px; background:white; border-radius:10px; padding:30px; box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.login-header {text-align:center; margin-bottom:25px;}
+.login-header h1 {color:var(--primary); font-weight:700; margin-bottom:8px;}
+.login-header p {color:var(--gray);}
+.form-group {margin-bottom:15px;}
+.form-group label {display:block; margin-bottom:5px; font-weight:500; color:var(--dark);}
+.form-control {width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:5px; font-size:14px;}
+.form-control:focus {outline:none; border-color:var(--primary);}
+.error-message {color:var(--danger); font-size:12px; margin-top:3px; display:none;}
+.dashboard {display:none; min-height:100vh;}
+.header {background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:10px 0; position:sticky; top:0; z-index:100;}
+.header-content {display:flex; justify-content:space-between; align-items:center;}
+.logo {font-size:20px; font-weight:700; color:var(--primary);}
+.nav ul {display:flex; list-style:none;}
+.nav li {margin-left:20px;}
+.nav a {color:var(--dark); text-decoration:none; font-weight:500; padding:5px 0; position:relative;}
+.nav a:after {content:''; position:absolute; bottom:0; left:0; width:0; height:2px; background:var(--primary); transition:width 0.3s;}
+.nav a:hover:after, .nav a.active:after {width:100%;}
+.nav a.active {color:var(--primary);}
+.main-content {padding:20px 0;}
+.page-title {margin-bottom:20px;}
+.page-title h2 {font-size:24px; color:var(--dark); margin-bottom:8px;}
+.stats-cards {display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:20px;}
+.stat-card {background:white; border-radius:8px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:center;}
+.stat-card h3 {font-size:14px; color:var(--gray); margin-bottom:8px;}
+.stat-card .number {font-size:24px; font-weight:700; color:var(--primary);}
+.attendance-table {width:100%; border-collapse:collapse; margin-top:15px; font-size:14px;}
+.attendance-table th, .attendance-table td {padding:8px 10px; text-align:left; border-bottom:1px solid #eee;}
+.attendance-table th {background:#f8f9fa; font-weight:600;}
+.attendance-table tr:hover {background:#f8f9fa;}
+select.form-control {padding:5px;}
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage" class="login-container">
+    <div class="login-box">
+        <div class="login-header">
+            <h1>Attendance System</h1>
+            <p>Login to access the dashboard</p>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="teacher@" required>
+                <div class="error-message" id="usernameError">Invalid username</div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+                <div class="error-message" id="passwordError">Invalid password</div>
+            </div>
+            <button type="submit" class="btn" style="width:100%;">Login</button>
+        </form>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Government School</div>
+                <nav class="nav">
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-page="home">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-page="manual">Manual Attendance</a></li>
+                        <li><a href="#" class="nav-link" data-page="view">View Attendance</a></li>
+                        <li><a href="#" id="logoutBtn">Logout</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container main-content">
+        <div id="homePage" class="page">
+            <div class="page-title">
+                <h2>Dashboard</h2>
+                <p>Welcome to the Attendance System</p>
+            </div>
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <h3>Total Students</h3>
+                    <div class="number" id="totalStudents">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Today's Attendance</h3>
+                    <div class="number" id="todaysAttendance">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="manualPage" class="page" style="display:none;">
+            <div class="page-title">
+                <h2>Manual Attendance</h2>
+                <p>Mark students as Present/Absent for today</p>
+            </div>
+            <div class="card">
+                <h3>Student List</h3>
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Status (Today)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button class="btn btn-success" onclick="saveAttendanceToServer()" style="margin-top:10px;">Save Attendance</button>
+            </div>
+        </div>
+
+        <div id="viewPage" class="page" style="display:none;">
+            <div class="page-title">
+                <h2>Monthly Attendance</h2>
+                <p>Select a month to view attendance records</p>
+                <div class="form-group">
+                    <label for="monthSelect">Select Month:</label>
+                    <select id="monthSelect" class="form-control" style="width:200px;"></select>
+                </div>
+            </div>
+            <div class="card">
+                <table class="attendance-table" id="monthlyTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ---------------- SERVER CONFIG ----------------
+const SERVER_HOST = window.location.hostname;
+const SERVER_PORT = 5000; // match config.server_port
+const BASE_URL = `${window.location.protocol}//${SERVER_HOST}:${SERVER_PORT}`;
+
+// ---------------- LOGIN ----------------
+const loginPage = document.getElementById('loginPage');
+const dashboard = document.getElementById('dashboard');
+const loginForm = document.getElementById('loginForm');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// ---------------- MONTH DROPDOWN ----------------
+const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const monthSelect = document.getElementById('monthSelect');
+months.forEach((month, i) => {
+    const opt = document.createElement('option');
+    opt.value = i+1;
+    opt.textContent = month;
+    if(i === new Date().getMonth()) opt.selected = true;
+    monthSelect.appendChild(opt);
+});
+
+// ---------------- CHECK LOGIN ----------------
+if(localStorage.getItem('loggedIn')==='true'){
+    loginPage.style.display='none';
+    dashboard.style.display='block';
+    initAndLoadDashboard();
+}
+
+// ---------------- LOGIN SUBMIT ----------------
+loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    document.getElementById('usernameError').style.display='none';
+    document.getElementById('passwordError').style.display='none';
+
+    if(username==='teacher@' && password==='1234'){
+        localStorage.setItem('loggedIn','true');
+        loginPage.style.display='none';
+        dashboard.style.display='block';
+        initAndLoadDashboard();
+    } else {
+        if(username!=='teacher@') document.getElementById('usernameError').style.display='block';
+        if(password!=='1234') document.getElementById('passwordError').style.display='block';
+    }
+});
+
+// ---------------- LOGOUT ----------------
+logoutBtn.addEventListener('click', ()=>{
+    dashboard.style.display='none';
+    loginPage.style.display='flex';
+    document.getElementById('username').value='';
+    document.getElementById('password').value='';
+    localStorage.removeItem('loggedIn');
+});
+
+// ---------------- FETCH ATTENDANCE ----------------
+async function fetchAttendance(){
+    try{
+        const res = await fetch(`${BASE_URL}/get_attendance`, {mode:'cors'});
+        if(!res.ok) throw new Error('Failed to fetch');
+        return await res.json();
+    } catch(err){
+        console.error('Error fetching attendance:', err);
+        return [];
+    }
+}
+
+// ---------------- INIT DASHBOARD ----------------
+async function initAndLoadDashboard(){
+    try{
+        await fetch(`${BASE_URL}/init_attendance`, {mode:'cors'});
+    } catch(err){
+        console.error('Error initializing attendance:', err);
+    }
+    loadDashboard();
+}
+
+// ---------------- DASHBOARD ----------------
+async function loadDashboard(){
+    document.getElementById('homePage').style.display='block';
+    const records = await fetchAttendance();
+
+    const allStudents = [...new Map(records.map(r=>[r.StudentID,r.Name]))];
+    const total = allStudents.length;
+
+    const today = new Date().toISOString().slice(0,10);
+    const todayRecords = records.filter(r=>r.Date===today);
+    const presentCount = todayRecords.filter(r=>r.Status==='P').length;
+
+    const percentage = total===0?'0%':((presentCount/total)*100).toFixed(2)+'%';
+    document.getElementById('totalStudents').textContent = total;
+    document.getElementById('todaysAttendance').textContent = percentage;
+}
+
+// ---------------- MANUAL ATTENDANCE ----------------
+async function loadManualAttendance(){
+    document.getElementById('manualPage').style.display='block';
+    const records = await fetchAttendance();
+    const allStudents = [...new Map(records.map(r=>[r.StudentID,r.Name]))];
+    const today = new Date().toISOString().slice(0,10);
+    const todayRecords = records.filter(r=>r.Date===today);
+
+    const tbody = document.querySelector('#manualPage tbody');
+    tbody.innerHTML='';
+
+    allStudents.forEach(([id,name])=>{
+        const todayRecord = todayRecords.find(r=>r.StudentID===id);
+        const tr = document.createElement('tr');
+        tr.innerHTML=`
+            <td>${id}</td>
+            <td>${name}</td>
+            <td>
+                <select class="form-control">
+                    <option value="P" ${todayRecord&&todayRecord.Status==='P'?'selected':''}>Present</option>
+                    <option value="A" ${!todayRecord||todayRecord.Status==='A'?'selected':''}>Absent</option>
+                </select>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ---------------- SAVE ATTENDANCE ----------------
+async function saveAttendanceToServer(){
+    const tbody = document.querySelector('#manualPage tbody');
+    const today = new Date().toISOString().slice(0,10);
+    const updated = [];
+
+    tbody.querySelectorAll('tr').forEach(tr=>{
+        const studentID = tr.children[0].textContent;
+        const name = tr.children[1].textContent;
+        const status = tr.children[2].querySelector('select').value;
+        updated.push({StudentID:studentID, Name:name, Date:today, Status:status});
+    });
+
+    try{
+        const res = await fetch(`${BASE_URL}/update_attendance`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(updated),
+            mode:'cors'
+        });
+        const data = await res.json();
+        if(data.success){
+            alert('Attendance updated successfully');
+            loadDashboard();
+        } else {
+            alert('Update failed: '+data.error);
+        }
+    } catch(err){
+        console.error(err);
+        alert('Update failed. Check console.');
+    }
+}
+
+// ---------------- VIEW ATTENDANCE ----------------
+async function loadViewAttendance(){
+    document.getElementById('viewPage').style.display='block';
+    monthSelect.addEventListener('change', renderMonthlyAttendance);
+    renderMonthlyAttendance();
+}
+
+async function renderMonthlyAttendance(){
+    const month = parseInt(monthSelect.value);
+    if(!month) return;
+
+    const records = await fetchAttendance();
+    const filtered = records.filter(r=> (new Date(r.Date).getMonth()+1) === month);
+    const students = [...new Map(filtered.map(r=>[r.StudentID,r.Name]))];
+
+    const dates = [...new Set(filtered.map(r=>r.Date))].sort();
+    const thead = document.querySelector('#monthlyTable thead');
+    const tbody = document.querySelector('#monthlyTable tbody');
+
+    thead.innerHTML='';
+    tbody.innerHTML='';
+
+    let headerRow='<tr><th>Student ID</th><th>Name</th>';
+    dates.forEach(d=>{
+        headerRow+=`<th>${new Date(d).getDate()}</th>`;
+    });
+    headerRow+='</tr>';
+    thead.innerHTML=headerRow;
+
+    students.forEach(([id,name])=>{
+        let row=`<tr><td>${id}</td><td>${name}</td>`;
+        dates.forEach(d=>{
+            const rec = filtered.find(r=>r.StudentID===id && r.Date===d);
+            row+=`<td>${rec?(rec.Status==='P'?'P':'A'):'-'}</td>`;
+        });
+        row+='</tr>';
+        tbody.innerHTML+=row;
+    });
+}
+
+// ---------------- NAVIGATION ----------------
+document.querySelectorAll('.nav-link').forEach(link=>{
+    link.addEventListener('click', e=>{
+        e.preventDefault();
+        const page = link.dataset.page;
+        document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+        if(page==='home') loadDashboard();
+        if(page==='manual') loadManualAttendance();
+        if(page==='view') loadViewAttendance();
+        document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+        link.classList.add('active');
+    });
+});
+</script>
+</body>
+</html>
