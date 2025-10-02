@@ -1,0 +1,8 @@
+opencv-python==4.8.1.78
+dlib==19.24.2
+numpy==1.24.3
+pillow==10.0.1
+pandas==2.0.3
+flask==2.3.3
+flask-cors==4.0.0
+cryptography==41.0.4
